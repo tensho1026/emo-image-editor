@@ -19,22 +19,22 @@ export default function DownloadButton({ disabled, onDownload }: DownloadButtonP
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="grid grid-cols-2 gap-2">
       <button
         type="button"
         disabled={disabled || busy}
         onClick={() => save("image/jpeg")}
-        className="w-full rounded-full bg-amber-100 py-3.5 text-sm font-medium tracking-wide text-stone-900 transition hover:bg-white disabled:opacity-50"
+        className="rounded-full bg-amber-100 py-2.5 text-sm font-medium tracking-wide text-stone-900 transition hover:bg-white disabled:opacity-50"
       >
-        {busy ? "書き出し中…" : "Download JPEG"}
+        {busy ? "…" : "JPEG"}
       </button>
       <button
         type="button"
         disabled={disabled || busy}
         onClick={() => save("image/png")}
-        className="w-full rounded-full border border-white/15 py-3 text-sm text-stone-300 hover:border-white/35 disabled:opacity-50"
+        className="rounded-full border border-white/15 py-2.5 text-sm text-stone-300 hover:border-white/35 disabled:opacity-50"
       >
-        Download PNG
+        PNG
       </button>
     </div>
   );

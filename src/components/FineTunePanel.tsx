@@ -4,7 +4,6 @@ import SliderRow from "./SliderRow";
 type FineTunePanelProps = {
   tweaks: AppliedFilters;
   onChange: (tweaks: AppliedFilters) => void;
-  onReset: () => void;
 };
 
 function round(value: number, digits = 2): string {
@@ -12,26 +11,16 @@ function round(value: number, digits = 2): string {
   return String(Math.round(value * factor) / factor);
 }
 
-export default function FineTunePanel({ tweaks, onChange, onReset }: FineTunePanelProps) {
+export default function FineTunePanel({ tweaks, onChange }: FineTunePanelProps) {
   const set = (key: keyof AppliedFilters, value: number) => {
     onChange({ ...tweaks, [key]: value });
   };
 
   return (
-    <section className="rounded-3xl border border-white/8 bg-black/20 px-4 py-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xs tracking-[0.28em] text-stone-400 uppercase">Adjust</h2>
-        <button
-          type="button"
-          className="text-[11px] tracking-wide text-stone-500 underline-offset-4 hover:text-stone-300 hover:underline"
-          onClick={onReset}
-        >
-          リセット
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <p className="text-[10px] tracking-[0.22em] text-stone-500 uppercase">光</p>
+    <section>
+      <h2 className="mb-3 text-xs tracking-[0.28em] text-stone-400 uppercase">Adjust</h2>
+      <div className="grid grid-cols-1 gap-x-5 gap-y-3 lg:grid-cols-2">
+        <p className="text-[10px] tracking-[0.22em] text-stone-500 uppercase lg:col-span-2">光</p>
         <SliderRow
           label="明るさ"
           min={60}
@@ -65,7 +54,7 @@ export default function FineTunePanel({ tweaks, onChange, onReset }: FineTunePan
           onChange={(value) => set("highlights", value / 100)}
         />
 
-        <p className="mt-1 text-[10px] tracking-[0.22em] text-stone-500 uppercase">色</p>
+        <p className="mt-1 text-[10px] tracking-[0.22em] text-stone-500 uppercase lg:col-span-2">色</p>
         <SliderRow
           label="彩度"
           min={40}
@@ -99,7 +88,7 @@ export default function FineTunePanel({ tweaks, onChange, onReset }: FineTunePan
           onChange={(value) => set("hue", value)}
         />
 
-        <p className="mt-1 text-[10px] tracking-[0.22em] text-stone-500 uppercase">空気</p>
+        <p className="mt-1 text-[10px] tracking-[0.22em] text-stone-500 uppercase lg:col-span-2">空気</p>
         <SliderRow
           label="フェード"
           min={-30}
