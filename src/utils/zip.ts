@@ -84,13 +84,13 @@ export function createZip(entries: ZipEntry[]): Blob {
     writeU16(view, offset + 12, 0);
     writeU16(view, offset + 14, 0);
     writeU32(view, offset + 16, entry.crc);
-    writeU32(view, offset + 18, entry.data.length);
-    writeU32(view, offset + 22, entry.data.length);
-    writeU16(view, offset + 26, entry.nameBytes.length);
-    writeU16(view, offset + 28, 0);
+    writeU32(view, offset + 20, entry.data.length);
+    writeU32(view, offset + 24, entry.data.length);
+    writeU16(view, offset + 28, entry.nameBytes.length);
     writeU16(view, offset + 30, 0);
     writeU16(view, offset + 32, 0);
     writeU16(view, offset + 34, 0);
+    writeU16(view, offset + 36, 0);
     writeU32(view, offset + 38, 0);
     writeU32(view, offset + 42, localOffsets[i]);
     bytes.set(entry.nameBytes, offset + 46);
