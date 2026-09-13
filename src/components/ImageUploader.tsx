@@ -2,21 +2,22 @@ import { useCallback, useId, useState } from "react";
 import { isAcceptedImage } from "../utils/image";
 
 type ImageUploaderProps = {
-  onFile: (file: File) => void;
+  onFiles: (files: File[]) => void;
   disabled?: boolean;
 };
 
-export default function ImageUploader({ onFile, disabled }: ImageUploaderProps) {
+export default function ImageUploader({ onFiles, disabled }: ImageUploaderProps) {
   const inputId = useId();
   const [isDragging, setIsDragging] = useState(false);
 
-  const takeFile = useCallback(
-    (file: File | undefined) => {
-      if (!file || disabled) return;
-      if (!isAcceptedImage(file)) return;
-      onFile(file);
+  const takeFiles = useCallback(
+    (list: FileList | File[] | null) => {
+      if (!list || disabled) return;
+      const files = Array.from(list).filter(isAcceptedImage);
+      if (files.length === 0) return;
+      onFiles(files);
     },
-    [disabled, onFile],
+    [disabled, onFiles],
   );
 
   return (
@@ -37,7 +38,7 @@ export default function ImageUploader({ onFile, disabled }: ImageUploaderProps) 
       onDrop={(event) => {
         event.preventDefault();
         setIsDragging(false);
-        takeFile(event.dataTransfer.files[0]);
+        takeFiles(event.dataTransfer.files);
       }}
     >
       <span className="flex h-16 w-16 items-center justify-center rounded-full border border-amber-200/30 text-amber-100/80">
@@ -53,16 +54,17 @@ export default function ImageUploader({ onFile, disabled }: ImageUploaderProps) 
       </span>
       <div>
         <p className="font-display text-2xl italic text-stone-100">写真をここに置く</p>
-        <p className="mt-2 text-sm text-stone-400">タップして選択、またはドラッグ＆ドロップ</p>
+        <p className="mt-2 text-sm text-stone-400">1枚でも、複数枚でも。同じ設定でまとめて加工できます</p>
       </div>
       <input
         id={inputId}
         type="file"
+        multiple
         accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
         className="sr-only"
         disabled={disabled}
         onChange={(event) => {
-          takeFile(event.target.files?.[0]);
+          takeFiles(event.target.files);
           event.target.value = "";
         }}
       />
