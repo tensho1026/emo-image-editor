@@ -26,11 +26,11 @@ export default function ImagePreview({
   }, [isShowingOriginal, version, sourceRef, outputRef]);
 
   return (
-    <div className="relative flex min-h-[280px] items-center justify-center bg-black/40">
+    <div className="relative flex h-full min-h-0 w-full items-center justify-center bg-black/50 pb-14">
       <canvas
         ref={displayRef}
-        className="max-h-[min(62vh,640px)] w-full object-contain"
-        style={{ maxWidth: "100%", height: "auto" }}
+        className="max-h-full max-w-full object-contain"
+        style={{ width: "auto", height: "auto" }}
       />
       <span className="absolute left-3 top-3 rounded-full bg-black/55 px-3 py-1 text-[11px] tracking-widest text-stone-200 uppercase">
         {isShowingOriginal ? "Original" : "Edited"}

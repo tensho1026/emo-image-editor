@@ -11,7 +11,7 @@ type SliderRowProps = {
 export default function SliderRow({ label, value, min, max, step = 1, display, onChange }: SliderRowProps) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-center justify-between text-[11px] tracking-wide text-stone-400">
+      <span className="mb-1 flex items-center justify-between text-[11px] tracking-wide text-stone-400">
         <span>{label}</span>
         <span className="font-display text-sm text-amber-100/90">{display}</span>
       </span>
