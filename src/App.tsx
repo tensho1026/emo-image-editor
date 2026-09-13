@@ -50,6 +50,15 @@ export default function App() {
     return () => window.cancelAnimationFrame(id);
   }, [filters, hasImage]);
 
+  useEffect(() => {
+    if (!hasImage) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [hasImage]);
+
   const resetEdits = () => {
     setSelectedPresetId(DEFAULT_PRESET_ID);
     setIntensity(50);
@@ -112,9 +121,9 @@ export default function App() {
   }
 
   return (
-    <div className="relative h-dvh overflow-hidden">
+    <div className="fixed inset-0 z-10 overflow-hidden">
       <div className="pointer-events-none absolute inset-0 grain-overlay" />
-      <div className="relative flex h-dvh min-h-0 flex-col lg:flex-row">
+      <div className="relative flex h-full min-h-0 flex-col lg:flex-row">
         <section className="flex h-[42dvh] min-h-[220px] shrink-0 flex-col border-b border-white/8 bg-black/30 lg:h-full lg:min-h-0 lg:flex-1 lg:border-b-0 lg:border-r">
           <div className="flex items-center justify-between px-4 py-2 lg:px-5 lg:py-3">
             <p className="font-display text-xs tracking-[0.32em] text-amber-200/70 lg:text-sm">EMO</p>
