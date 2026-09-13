@@ -15,9 +15,9 @@ body {
   margin: 0;
   color: #f4efe8;
   background:
-    radial-gradient(1200px 700px at 50% -10%, rgba(201, 162, 122, 0.18), transparent 55%),
-    radial-gradient(800px 500px at 100% 100%, rgba(70, 90, 140, 0.12), transparent 50%),
-    #14110e;
+    radial-gradient(1200px 700px at 50% -10%, rgba(90, 130, 190, 0.16), transparent 55%),
+    radial-gradient(800px 500px at 100% 100%, rgba(40, 60, 110, 0.18), transparent 50%),
+    #10131a;
   font-family: var(--font-sans);
 }
 

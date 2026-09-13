@@ -10,7 +10,7 @@ export default function PresetSelector({ presets, selectedId, onSelect }: Preset
   return (
     <section>
       <h2 className="mb-3 text-center text-xs tracking-[0.28em] text-stone-400 uppercase">Presets</h2>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {presets.map((preset) => {
           const selected = preset.id === selectedId;
           return (

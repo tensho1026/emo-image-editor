@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import CompareToggle from "./components/CompareToggle";
 import DownloadButton from "./components/DownloadButton";
+import FineTunePanel from "./components/FineTunePanel";
 import ImageEditor from "./components/ImageEditor";
 import ImagePreview from "./components/ImagePreview";
 import ImageUploader from "./components/ImageUploader";
 import IntensitySlider from "./components/IntensitySlider";
 import PresetSelector from "./components/PresetSelector";
-import { DEFAULT_PRESET_ID, presets } from "./presets/presets";
-import { applyIntensity, renderEditedImage } from "./utils/filters";
+import { DEFAULT_PRESET_ID, IDENTITY_TWEAKS, presets } from "./presets/presets";
+import { applyIntensity, combineFilters, renderEditedImage } from "./utils/filters";
 import { canvasToBlob, downloadBlob, drawToPreviewCanvas, loadImageFromFile } from "./utils/image";
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const [fileName, setFileName] = useState("memory");
   const [selectedPresetId, setSelectedPresetId] = useState(DEFAULT_PRESET_ID);
   const [intensity, setIntensity] = useState(50);
+  const [tweaks, setTweaks] = useState(IDENTITY_TWEAKS);
   const [isShowingOriginal, setIsShowingOriginal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,7 +30,10 @@ export default function App() {
     [selectedPresetId],
   );
 
-  const filters = useMemo(() => applyIntensity(selectedPreset, intensity), [selectedPreset, intensity]);
+  const filters = useMemo(
+    () => combineFilters(applyIntensity(selectedPreset, intensity), tweaks),
+    [selectedPreset, intensity, tweaks],
+  );
 
   const rerender = () => {
     const source = sourceCanvasRef.current;
@@ -111,10 +116,12 @@ export default function App() {
                 selectedId={selectedPresetId}
                 onSelect={(id) => {
                   setSelectedPresetId(id);
+                  setTweaks(IDENTITY_TWEAKS);
                   setIsShowingOriginal(false);
                 }}
               />
               <IntensitySlider value={intensity} onChange={setIntensity} />
+              <FineTunePanel tweaks={tweaks} onChange={setTweaks} onReset={() => setTweaks(IDENTITY_TWEAKS)} />
               <DownloadButton disabled={!hasImage} onDownload={handleDownload} />
               <button
                 type="button"

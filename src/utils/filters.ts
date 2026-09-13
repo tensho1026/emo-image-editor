@@ -1,6 +1,10 @@
 import type { AppliedFilters, Preset } from "../types/preset";
 import { IDENTITY_PRESET } from "../presets/presets";
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 /** Intensity 50 = preset as designed, 0 = none, 100 = 2× the designed effect. */
 export function applyIntensity(preset: Preset, intensity: number): AppliedFilters {
   const t = intensity / 50;
@@ -15,6 +19,31 @@ export function applyIntensity(preset: Preset, intensity: number): AppliedFilter
     bloom: mix(IDENTITY_PRESET.bloom, preset.bloom),
     warmth: mix(IDENTITY_PRESET.warmth, preset.warmth),
     fade: mix(IDENTITY_PRESET.fade, preset.fade),
+    blue: mix(IDENTITY_PRESET.blue, preset.blue),
+    hue: mix(IDENTITY_PRESET.hue, preset.hue),
+    shadows: mix(IDENTITY_PRESET.shadows, preset.shadows),
+    highlights: mix(IDENTITY_PRESET.highlights, preset.highlights),
+    vignette: mix(IDENTITY_PRESET.vignette, preset.vignette),
+    haze: mix(IDENTITY_PRESET.haze, preset.haze),
+  };
+}
+
+export function combineFilters(base: AppliedFilters, tweaks: AppliedFilters): AppliedFilters {
+  return {
+    brightness: clamp(base.brightness * tweaks.brightness, 0.25, 1.8),
+    contrast: clamp(base.contrast * tweaks.contrast, 0.4, 2),
+    saturation: clamp(base.saturation * tweaks.saturation, 0.15, 2),
+    blur: clamp(base.blur + tweaks.blur, 0, 8),
+    grain: clamp(base.grain + tweaks.grain, 0, 1),
+    bloom: clamp(base.bloom + tweaks.bloom, 0, 1),
+    warmth: clamp(base.warmth + tweaks.warmth, -1.5, 1.5),
+    fade: clamp(base.fade + tweaks.fade, 0, 1),
+    blue: clamp(base.blue + tweaks.blue, 0, 1.4),
+    hue: clamp(base.hue + tweaks.hue, -40, 40),
+    shadows: clamp(base.shadows + tweaks.shadows, 0, 1),
+    highlights: clamp(base.highlights + tweaks.highlights, 0, 1),
+    vignette: clamp(base.vignette + tweaks.vignette, 0, 1),
+    haze: clamp(base.haze + tweaks.haze, 0, 1),
   };
 }
 
@@ -24,6 +53,9 @@ export function cssFilterString(filters: AppliedFilters): string {
     `contrast(${filters.contrast})`,
     `saturate(${filters.saturation})`,
   ];
+  if (Math.abs(filters.hue) > 0.4) {
+    parts.push(`hue-rotate(${filters.hue.toFixed(1)}deg)`);
+  }
   if (filters.blur > 0.05) {
     parts.push(`blur(${filters.blur.toFixed(2)}px)`);
   }
@@ -97,31 +129,92 @@ export function renderEditedImage(
     }
   }
 
+  if (filters.blue > 0.01) {
+    ctx.save();
+    ctx.globalCompositeOperation = "multiply";
+    ctx.globalAlpha = Math.min(0.82, filters.blue * 0.62);
+    ctx.fillStyle = "#081426";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalCompositeOperation = "color";
+    ctx.globalAlpha = Math.min(0.78, filters.blue * 0.72);
+    ctx.fillStyle = "#3a6cb8";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalCompositeOperation = "overlay";
+    ctx.globalAlpha = Math.min(0.45, filters.blue * 0.38);
+    ctx.fillStyle = "#1a3f86";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  }
+
   if (Math.abs(filters.warmth) > 0.01) {
     ctx.save();
     ctx.globalCompositeOperation = "overlay";
-    ctx.globalAlpha = Math.min(0.55, Math.abs(filters.warmth) * 0.45);
-    if (filters.warmth > 0) {
-      ctx.fillStyle = "#e8a05a";
-    } else {
-      ctx.fillStyle = "#5a7ec8";
-    }
+    ctx.globalAlpha = Math.min(0.58, Math.abs(filters.warmth) * 0.48);
+    ctx.fillStyle = filters.warmth > 0 ? "#e8a05a" : "#4a72c4";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  }
+
+  if (filters.shadows > 0.01) {
+    ctx.save();
+    ctx.globalCompositeOperation = "multiply";
+    ctx.globalAlpha = Math.min(0.7, filters.shadows * 0.55);
+    ctx.fillStyle = filters.blue > 0.2 ? "#050a16" : "#0a0806";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  }
+
+  if (filters.highlights > 0.01) {
+    ctx.save();
+    ctx.globalCompositeOperation = "multiply";
+    ctx.globalAlpha = Math.min(0.4, filters.highlights * 0.32);
+    ctx.fillStyle = filters.blue > 0.2 ? "#6d7c94" : "#9a9084";
     ctx.fillRect(0, 0, width, height);
     ctx.restore();
   }
 
   if (filters.fade > 0.01) {
+    const coolFade = filters.blue > 0.18 || filters.warmth < -0.15;
     ctx.save();
     ctx.globalCompositeOperation = "lighten";
-    ctx.globalAlpha = Math.min(0.55, filters.fade * 0.55);
-    ctx.fillStyle = "#3a342e";
+    ctx.globalAlpha = Math.min(0.5, filters.fade * 0.5);
+    ctx.fillStyle = coolFade ? "#1a2436" : "#3a342e";
     ctx.fillRect(0, 0, width, height);
     ctx.restore();
 
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = Math.min(0.22, filters.fade * 0.28);
-    ctx.fillStyle = "#d7c4a8";
+    ctx.fillStyle = coolFade ? "#6d7f99" : "#d7c4a8";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  }
+
+  if (filters.haze > 0.01) {
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = Math.min(0.4, filters.haze * 0.36);
+    ctx.fillStyle = filters.blue > 0.15 ? "#6a88b0" : "#d8cfc4";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  }
+
+  if (filters.vignette > 0.01) {
+    const radius = Math.max(width, height) * 0.72;
+    const inner = Math.min(width, height) * 0.22;
+    const gradient = ctx.createRadialGradient(width / 2, height / 2, inner, width / 2, height / 2, radius);
+    gradient.addColorStop(0, "rgba(0,0,0,0)");
+    const edge = filters.blue > 0.2 ? `rgba(2, 8, 22, ${Math.min(0.92, filters.vignette * 0.9)})` : `rgba(8, 6, 4, ${Math.min(0.88, filters.vignette * 0.85)})`;
+    gradient.addColorStop(1, edge);
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
     ctx.restore();
   }
