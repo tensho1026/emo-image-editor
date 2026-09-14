@@ -13,6 +13,7 @@ import PresetSelector from "./components/PresetSelector";
 import RecipePanel from "./components/RecipePanel";
 import ResetEditsButton from "./components/ResetEditsButton";
 import UndoButton from "./components/UndoButton";
+import CompareToggle from "./components/CompareToggle";
 import { DEFAULT_PRESET_ID, IDENTITY_TWEAKS, presets } from "./presets/presets";
 import type { AppliedFilters, ExportSize } from "./types/preset";
 import type { BatchItem } from "./types/batch";
@@ -58,7 +59,7 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewVersion, setPreviewVersion] = useState(0);
   const [exportProgress, setExportProgress] = useState<string | null>(null);
-  const [split, setSplit] = useState(50);
+  const [isShowingOriginal, setIsShowingOriginal] = useState(false);
   const [cropMode, setCropMode] = useState(false);
   const [aspect, setAspect] = useState<AspectId>("free");
   const [crops, setCrops] = useState<Record<string, CropRect>>({});
@@ -145,7 +146,7 @@ export default function App() {
     setSelectedPresetId(DEFAULT_PRESET_ID);
     setIntensity(50);
     setTweaks(IDENTITY_TWEAKS);
-    setSplit(50);
+    setIsShowingOriginal(false);
   };
 
   const undo = () => {
@@ -196,7 +197,7 @@ export default function App() {
         setSelectedPresetId(DEFAULT_PRESET_ID);
         setIntensity(50);
         setTweaks(IDENTITY_TWEAKS);
-        setSplit(50);
+        setIsShowingOriginal(false);
         if (source && output) {
           showItemOnCanvases(nextItems[0], source, output, filters, FULL_CROP);
         }
@@ -333,9 +334,8 @@ export default function App() {
               <ImagePreview
                 sourceRef={sourceCanvasRef}
                 outputRef={outputCanvasRef}
+                isShowingOriginal={isShowingOriginal}
                 version={previewVersion}
-                split={split}
-                onSplitChange={setSplit}
                 cropMode={cropMode}
                 crop={activeCrop}
                 onCropChange={(crop) => {
@@ -343,6 +343,11 @@ export default function App() {
                   setCrops((current) => ({ ...current, [activeItem.id]: clampCrop(crop) }));
                 }}
               />
+              {!cropMode ? (
+                <div className="absolute inset-x-3 bottom-3 z-10">
+                  <CompareToggle isShowingOriginal={isShowingOriginal} onChange={setIsShowingOriginal} />
+                </div>
+              ) : null}
             </div>
           </div>
           <ImageStrip items={items} activeId={activeItem.id} onSelect={setActiveId} />
@@ -364,6 +369,7 @@ export default function App() {
                   commit();
                   setSelectedPresetId(id);
                   setTweaks(IDENTITY_TWEAKS);
+                  setIsShowingOriginal(false);
                 }}
               />
               <IntensitySlider value={intensity} onChange={setIntensity} />

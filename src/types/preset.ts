@@ -19,7 +19,6 @@ export type Preset = {
   lightLeak: number;
   aberration: number;
   skyGradient: number;
-  dateStamp: number;
   frame: number;
 };
 

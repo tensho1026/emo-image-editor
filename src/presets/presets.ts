@@ -4,7 +4,6 @@ const atmosphereZero = {
   lightLeak: 0,
   aberration: 0,
   skyGradient: 0,
-  dateStamp: 0,
   frame: 0,
 };
 
@@ -50,7 +49,6 @@ export const presets: Preset[] = [
     lightLeak: 0.06,
     aberration: 0.1,
     skyGradient: 0.52,
-    dateStamp: 0,
     frame: 0,
   },
   {
@@ -74,7 +72,6 @@ export const presets: Preset[] = [
     lightLeak: 0.04,
     aberration: 0.12,
     skyGradient: 0.62,
-    dateStamp: 0,
     frame: 0,
   },
   {
@@ -98,7 +95,6 @@ export const presets: Preset[] = [
     lightLeak: 0.42,
     aberration: 0.16,
     skyGradient: 0,
-    dateStamp: 0.35,
     frame: 0.08,
   },
   {
@@ -122,7 +118,6 @@ export const presets: Preset[] = [
     lightLeak: 0.28,
     aberration: 0.08,
     skyGradient: 0.08,
-    dateStamp: 0,
     frame: 0,
   },
   {
@@ -146,7 +141,6 @@ export const presets: Preset[] = [
     lightLeak: 0.14,
     aberration: 0.38,
     skyGradient: 0,
-    dateStamp: 0.22,
     frame: 0.22,
   },
   {
@@ -170,7 +164,6 @@ export const presets: Preset[] = [
     lightLeak: 0.18,
     aberration: 0.22,
     skyGradient: 0.32,
-    dateStamp: 0,
     frame: 0,
   },
   {
@@ -194,7 +187,6 @@ export const presets: Preset[] = [
     lightLeak: 0.2,
     aberration: 0.12,
     skyGradient: 0,
-    dateStamp: 0.72,
     frame: 0.48,
     },
   {
@@ -218,7 +210,6 @@ export const presets: Preset[] = [
     lightLeak: 0.08,
     aberration: 0.06,
     skyGradient: 0.22,
-    dateStamp: 0,
     frame: 0,
   },
 ];

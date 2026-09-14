@@ -165,14 +165,6 @@ export default function FineTunePanel({ tweaks, onChange }: FineTunePanelProps) 
           onChange={(value) => set("skyGradient", value / 100)}
         />
         <SliderRow
-          label="日付"
-          min={-30}
-          max={80}
-          value={Math.round(tweaks.dateStamp * 100)}
-          display={String(Math.round(tweaks.dateStamp * 100))}
-          onChange={(value) => set("dateStamp", value / 100)}
-        />
-        <SliderRow
           label="枠"
           min={-30}
           max={80}

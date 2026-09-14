@@ -36,7 +36,6 @@ export function combineFilters(base: AppliedFilters, tweaks: AppliedFilters): Ap
     lightLeak: clamp(base.lightLeak + tweaks.lightLeak, 0, 1),
     aberration: clamp(base.aberration + tweaks.aberration, 0, 1),
     skyGradient: clamp(base.skyGradient + tweaks.skyGradient, 0, 1),
-    dateStamp: clamp(base.dateStamp + tweaks.dateStamp, 0, 1),
     frame: clamp(base.frame + tweaks.frame, 0, 1),
   };
 }
@@ -106,13 +105,6 @@ function applyAberration(ctx: CanvasRenderingContext2D, width: number, height: n
     }
   }
   ctx.putImageData(out, 0, 0);
-}
-
-function formatStamp(date = new Date()): string {
-  const yy = String(date.getFullYear()).slice(2);
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
-  return `'${yy} ${m} ${d}`;
 }
 
 export function renderEditedImage(
@@ -289,18 +281,6 @@ export function renderEditedImage(
     ctx.fillRect(0, 0, border, height);
     ctx.fillRect(width - border, 0, border, height);
     ctx.fillRect(0, height - bottom, width, bottom);
-    ctx.restore();
-  }
-
-  if (filters.dateStamp > 0.05) {
-    const size = Math.max(11, Math.round(Math.min(width, height) * 0.038));
-    ctx.save();
-    ctx.font = `600 ${size}px "Courier New", ui-monospace, monospace`;
-    ctx.fillStyle = `rgba(255, 132, 48, ${Math.min(0.95, 0.45 + filters.dateStamp * 0.5)})`;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "bottom";
-    const pad = Math.max(10, Math.min(width, height) * 0.045) + (filters.frame > 0.02 ? Math.min(width, height) * filters.frame * 0.04 : 0);
-    ctx.fillText(formatStamp(), width - pad, height - pad * 0.85);
     ctx.restore();
   }
 }
