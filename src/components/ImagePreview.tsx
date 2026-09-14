@@ -104,7 +104,7 @@ export default function ImagePreview({
         <canvas
           ref={editedRef}
           className="pointer-events-none absolute inset-0 h-full w-full"
-          style={{ clipPath: `inset(0 0 0 ${split}%)` }}
+          style={{ clipPath: cropMode ? "none" : `inset(0 0 0 ${split}%)` }}
         />
 
         {!cropMode ? (
