@@ -95,7 +95,8 @@ export default function App() {
     const source = sourceCanvasRef.current;
     const output = outputCanvasRef.current;
     if (!source || !output || !activeItem) return;
-    showItemOnCanvases(activeItem, source, output, filters, activeCrop);
+    const cropForView = cropMode ? FULL_CROP : activeCrop;
+    showItemOnCanvases(activeItem, source, output, filters, cropForView);
     setPreviewVersion((value) => value + 1);
   };
 
@@ -103,7 +104,7 @@ export default function App() {
     if (!hasImage) return;
     const id = window.requestAnimationFrame(rerender);
     return () => window.cancelAnimationFrame(id);
-  }, [filters, hasImage, activeId, activeCrop]);
+  }, [filters, hasImage, activeId, activeCrop, cropMode]);
 
   useEffect(() => {
     if (!hasImage) return;
