@@ -16,6 +16,13 @@ export type Preset = {
   highlights: number;
   vignette: number;
   haze: number;
+  lightLeak: number;
+  aberration: number;
+  skyGradient: number;
+  dateStamp: number;
+  frame: number;
 };
 
 export type AppliedFilters = Omit<Preset, "id" | "name" | "description">;
+
+export type ExportSize = "original" | "preview" | "square" | "story";

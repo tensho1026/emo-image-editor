@@ -9,23 +9,12 @@ function clamp(value: number, min: number, max: number): number {
 export function applyIntensity(preset: Preset, intensity: number): AppliedFilters {
   const t = intensity / 50;
   const mix = (identity: number, value: number) => identity + (value - identity) * t;
-
-  return {
-    brightness: mix(IDENTITY_PRESET.brightness, preset.brightness),
-    contrast: mix(IDENTITY_PRESET.contrast, preset.contrast),
-    saturation: mix(IDENTITY_PRESET.saturation, preset.saturation),
-    blur: mix(IDENTITY_PRESET.blur, preset.blur),
-    grain: mix(IDENTITY_PRESET.grain, preset.grain),
-    bloom: mix(IDENTITY_PRESET.bloom, preset.bloom),
-    warmth: mix(IDENTITY_PRESET.warmth, preset.warmth),
-    fade: mix(IDENTITY_PRESET.fade, preset.fade),
-    blue: mix(IDENTITY_PRESET.blue, preset.blue),
-    hue: mix(IDENTITY_PRESET.hue, preset.hue),
-    shadows: mix(IDENTITY_PRESET.shadows, preset.shadows),
-    highlights: mix(IDENTITY_PRESET.highlights, preset.highlights),
-    vignette: mix(IDENTITY_PRESET.vignette, preset.vignette),
-    haze: mix(IDENTITY_PRESET.haze, preset.haze),
-  };
+  const keys = Object.keys(IDENTITY_PRESET) as (keyof AppliedFilters)[];
+  const next = { ...IDENTITY_PRESET };
+  for (const key of keys) {
+    next[key] = mix(IDENTITY_PRESET[key], preset[key]);
+  }
+  return next;
 }
 
 export function combineFilters(base: AppliedFilters, tweaks: AppliedFilters): AppliedFilters {
@@ -44,10 +33,15 @@ export function combineFilters(base: AppliedFilters, tweaks: AppliedFilters): Ap
     highlights: clamp(base.highlights + tweaks.highlights, 0, 1),
     vignette: clamp(base.vignette + tweaks.vignette, 0, 1),
     haze: clamp(base.haze + tweaks.haze, 0, 1),
+    lightLeak: clamp(base.lightLeak + tweaks.lightLeak, 0, 1),
+    aberration: clamp(base.aberration + tweaks.aberration, 0, 1),
+    skyGradient: clamp(base.skyGradient + tweaks.skyGradient, 0, 1),
+    dateStamp: clamp(base.dateStamp + tweaks.dateStamp, 0, 1),
+    frame: clamp(base.frame + tweaks.frame, 0, 1),
   };
 }
 
-export function cssFilterString(filters: AppliedFilters): string {
+export function cssFilterString(filters: AppliedFilters, pixelScale = 1): string {
   const parts = [
     `brightness(${filters.brightness})`,
     `contrast(${filters.contrast})`,
@@ -57,7 +51,7 @@ export function cssFilterString(filters: AppliedFilters): string {
     parts.push(`hue-rotate(${filters.hue.toFixed(1)}deg)`);
   }
   if (filters.blur > 0.05) {
-    parts.push(`blur(${filters.blur.toFixed(2)}px)`);
+    parts.push(`blur(${(filters.blur * pixelScale).toFixed(2)}px)`);
   }
   return parts.join(" ");
 }
@@ -93,10 +87,39 @@ function getGrainCanvas(width: number, height: number): HTMLCanvasElement {
   return canvas;
 }
 
+function applyAberration(ctx: CanvasRenderingContext2D, width: number, height: number, amount: number, pixelScale: number): void {
+  const shift = Math.max(1, Math.round(amount * 6 * pixelScale));
+  if (shift < 1 || width * height > 3_500_000) return;
+  const src = ctx.getImageData(0, 0, width, height);
+  const out = ctx.createImageData(width, height);
+  const s = src.data;
+  const d = out.data;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4;
+      const xl = Math.max(0, x - shift);
+      const xr = Math.min(width - 1, x + shift);
+      d[i] = s[(y * width + xl) * 4];
+      d[i + 1] = s[i + 1];
+      d[i + 2] = s[(y * width + xr) * 4 + 2];
+      d[i + 3] = s[i + 3];
+    }
+  }
+  ctx.putImageData(out, 0, 0);
+}
+
+function formatStamp(date = new Date()): string {
+  const yy = String(date.getFullYear()).slice(2);
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  return `'${yy} ${m} ${d}`;
+}
+
 export function renderEditedImage(
   source: HTMLCanvasElement | HTMLImageElement,
   dest: HTMLCanvasElement,
   filters: AppliedFilters,
+  pixelScale = 1,
 ): void {
   const width = source instanceof HTMLImageElement ? source.naturalWidth : source.width;
   const height = source instanceof HTMLImageElement ? source.naturalHeight : source.height;
@@ -108,7 +131,7 @@ export function renderEditedImage(
   if (!ctx) return;
 
   ctx.clearRect(0, 0, width, height);
-  ctx.filter = cssFilterString(filters);
+  ctx.filter = cssFilterString(filters, pixelScale);
   ctx.drawImage(source, 0, 0, width, height);
   ctx.filter = "none";
 
@@ -117,8 +140,8 @@ export function renderEditedImage(
     bloomCanvas.height = height;
     const bctx = bloomCanvas.getContext("2d");
     if (bctx) {
-      const bloomBlur = Math.max(8, filters.blur * 4 + 12);
-      bctx.filter = `${cssFilterString(filters)} blur(${bloomBlur}px) brightness(1.25)`;
+      const bloomBlur = Math.max(8, filters.blur * 4 + 12) * pixelScale;
+      bctx.filter = `${cssFilterString(filters, pixelScale)} blur(${bloomBlur}px) brightness(1.25)`;
       bctx.drawImage(source, 0, 0, width, height);
       bctx.filter = "none";
       ctx.save();
@@ -148,6 +171,17 @@ export function renderEditedImage(
     ctx.globalCompositeOperation = "overlay";
     ctx.globalAlpha = Math.min(0.45, filters.blue * 0.38);
     ctx.fillStyle = "#1a3f86";
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  }
+
+  if (filters.skyGradient > 0.01) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, `rgba(28, 72, 140, ${Math.min(0.7, filters.skyGradient * 0.65)})`);
+    gradient.addColorStop(0.48, "rgba(28, 72, 140, 0)");
+    ctx.save();
+    ctx.globalCompositeOperation = "multiply";
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
     ctx.restore();
   }
@@ -205,6 +239,24 @@ export function renderEditedImage(
     ctx.restore();
   }
 
+  if (filters.aberration > 0.02) {
+    applyAberration(ctx, width, height, filters.aberration, pixelScale);
+  }
+
+  if (filters.lightLeak > 0.01) {
+    const radius = Math.max(width, height) * (0.45 + filters.lightLeak * 0.35);
+    const gradient = ctx.createRadialGradient(width * 0.08, height * 0.12, 0, width * 0.08, height * 0.12, radius);
+    gradient.addColorStop(0, "rgba(255, 170, 80, 0.95)");
+    gradient.addColorStop(0.35, "rgba(255, 70, 40, 0.45)");
+    gradient.addColorStop(1, "rgba(255, 70, 40, 0)");
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = Math.min(0.85, filters.lightLeak * 0.9);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  }
+
   if (filters.vignette > 0.01) {
     const radius = Math.max(width, height) * 0.72;
     const inner = Math.min(width, height) * 0.22;
@@ -225,6 +277,30 @@ export function renderEditedImage(
     ctx.globalCompositeOperation = "overlay";
     ctx.globalAlpha = Math.min(0.7, filters.grain * 1.4);
     ctx.drawImage(grain, 0, 0);
+    ctx.restore();
+  }
+
+  if (filters.frame > 0.02) {
+    const border = Math.max(4, Math.min(width, height) * filters.frame * 0.055);
+    const bottom = border * (1.4 + filters.frame);
+    ctx.save();
+    ctx.fillStyle = "#efe2c9";
+    ctx.fillRect(0, 0, width, border);
+    ctx.fillRect(0, 0, border, height);
+    ctx.fillRect(width - border, 0, border, height);
+    ctx.fillRect(0, height - bottom, width, bottom);
+    ctx.restore();
+  }
+
+  if (filters.dateStamp > 0.05) {
+    const size = Math.max(11, Math.round(Math.min(width, height) * 0.038));
+    ctx.save();
+    ctx.font = `600 ${size}px "Courier New", ui-monospace, monospace`;
+    ctx.fillStyle = `rgba(255, 132, 48, ${Math.min(0.95, 0.45 + filters.dateStamp * 0.5)})`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    const pad = Math.max(10, Math.min(width, height) * 0.045) + (filters.frame > 0.02 ? Math.min(width, height) * filters.frame * 0.04 : 0);
+    ctx.fillText(formatStamp(), width - pad, height - pad * 0.85);
     ctx.restore();
   }
 }

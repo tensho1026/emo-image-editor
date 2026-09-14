@@ -1,4 +1,5 @@
-const MAX_PREVIEW_SIZE = 1920;
+export const MAX_PREVIEW_SIZE = 1920;
+export const MAX_FULL_SIZE = 4096;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function isAcceptedImage(file: File): boolean {

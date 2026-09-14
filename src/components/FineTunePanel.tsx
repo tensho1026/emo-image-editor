@@ -138,6 +138,48 @@ export default function FineTunePanel({ tweaks, onChange }: FineTunePanelProps) 
           display={String(Math.round(tweaks.vignette * 100))}
           onChange={(value) => set("vignette", value / 100)}
         />
+
+        <p className="mt-1 text-[10px] tracking-[0.22em] text-stone-500 uppercase lg:col-span-2">フィルム</p>
+        <SliderRow
+          label="ライトリーク"
+          min={-30}
+          max={80}
+          value={Math.round(tweaks.lightLeak * 100)}
+          display={String(Math.round(tweaks.lightLeak * 100))}
+          onChange={(value) => set("lightLeak", value / 100)}
+        />
+        <SliderRow
+          label="RGBずらし"
+          min={-30}
+          max={80}
+          value={Math.round(tweaks.aberration * 100)}
+          display={String(Math.round(tweaks.aberration * 100))}
+          onChange={(value) => set("aberration", value / 100)}
+        />
+        <SliderRow
+          label="空グラデ"
+          min={-30}
+          max={80}
+          value={Math.round(tweaks.skyGradient * 100)}
+          display={String(Math.round(tweaks.skyGradient * 100))}
+          onChange={(value) => set("skyGradient", value / 100)}
+        />
+        <SliderRow
+          label="日付"
+          min={-30}
+          max={80}
+          value={Math.round(tweaks.dateStamp * 100)}
+          display={String(Math.round(tweaks.dateStamp * 100))}
+          onChange={(value) => set("dateStamp", value / 100)}
+        />
+        <SliderRow
+          label="枠"
+          min={-30}
+          max={80}
+          value={Math.round(tweaks.frame * 100)}
+          display={String(Math.round(tweaks.frame * 100))}
+          onChange={(value) => set("frame", value / 100)}
+        />
       </div>
     </section>
   );

@@ -1,5 +1,13 @@
 import type { AppliedFilters, Preset } from "../types/preset";
 
+const atmosphereZero = {
+  lightLeak: 0,
+  aberration: 0,
+  skyGradient: 0,
+  dateStamp: 0,
+  frame: 0,
+};
+
 export const IDENTITY_PRESET: AppliedFilters = {
   brightness: 1,
   contrast: 1,
@@ -15,9 +23,9 @@ export const IDENTITY_PRESET: AppliedFilters = {
   highlights: 0,
   vignette: 0,
   haze: 0,
+  ...atmosphereZero,
 };
 
-/** Manual tweaks layered on a preset. Multipliers stay at 1, additives at 0. */
 export const IDENTITY_TWEAKS: AppliedFilters = { ...IDENTITY_PRESET };
 
 export const presets: Preset[] = [
@@ -39,6 +47,11 @@ export const presets: Preset[] = [
     highlights: 0.38,
     vignette: 0.46,
     haze: 0.16,
+    lightLeak: 0.06,
+    aberration: 0.1,
+    skyGradient: 0.52,
+    dateStamp: 0,
+    frame: 0,
   },
   {
     id: "abyss",
@@ -58,6 +71,11 @@ export const presets: Preset[] = [
     highlights: 0.48,
     vignette: 0.58,
     haze: 0.1,
+    lightLeak: 0.04,
+    aberration: 0.12,
+    skyGradient: 0.62,
+    dateStamp: 0,
+    frame: 0,
   },
   {
     id: "summer",
@@ -77,6 +95,11 @@ export const presets: Preset[] = [
     highlights: 0.06,
     vignette: 0.12,
     haze: 0.06,
+    lightLeak: 0.42,
+    aberration: 0.16,
+    skyGradient: 0,
+    dateStamp: 0.35,
+    frame: 0.08,
   },
   {
     id: "dream",
@@ -96,6 +119,11 @@ export const presets: Preset[] = [
     highlights: 0.1,
     vignette: 0.08,
     haze: 0.22,
+    lightLeak: 0.28,
+    aberration: 0.08,
+    skyGradient: 0.08,
+    dateStamp: 0,
+    frame: 0,
   },
   {
     id: "film",
@@ -115,6 +143,11 @@ export const presets: Preset[] = [
     highlights: 0.16,
     vignette: 0.22,
     haze: 0.08,
+    lightLeak: 0.14,
+    aberration: 0.38,
+    skyGradient: 0,
+    dateStamp: 0.22,
+    frame: 0.22,
   },
   {
     id: "night",
@@ -134,6 +167,11 @@ export const presets: Preset[] = [
     highlights: 0.22,
     vignette: 0.32,
     haze: 0.12,
+    lightLeak: 0.18,
+    aberration: 0.22,
+    skyGradient: 0.32,
+    dateStamp: 0,
+    frame: 0,
   },
   {
     id: "memory",
@@ -153,7 +191,12 @@ export const presets: Preset[] = [
     highlights: 0.18,
     vignette: 0.2,
     haze: 0.14,
-  },
+    lightLeak: 0.2,
+    aberration: 0.12,
+    skyGradient: 0,
+    dateStamp: 0.72,
+    frame: 0.48,
+    },
   {
     id: "fog",
     name: "Fog",
@@ -172,6 +215,11 @@ export const presets: Preset[] = [
     highlights: 0.28,
     vignette: 0.18,
     haze: 0.42,
+    lightLeak: 0.08,
+    aberration: 0.06,
+    skyGradient: 0.22,
+    dateStamp: 0,
+    frame: 0,
   },
 ];
 
