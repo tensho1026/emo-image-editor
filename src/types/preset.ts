@@ -20,15 +20,6 @@ export type Preset = {
   aberration: number;
   skyGradient: number;
   frame: number;
-  doubleExposure: number;
-  windowRain: number;
-  flashBurn: number;
-  rawLook: number;
-  colorCast: number;
-  scanDust: number;
-  foldedTape: number;
-  shake: number;
-  splitExposure: number;
 };
 
 export type AppliedFilters = Omit<Preset, "id" | "name" | "description">;
