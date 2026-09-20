@@ -1,21 +1,19 @@
-import { drawToPreviewCanvas, MAX_FULL_SIZE, MAX_PREVIEW_SIZE } from "./image";
+import { drawToPreviewCanvas, MAX_PREVIEW_SIZE } from "./image";
 import type { BatchItem } from "../types/batch";
 import type { AppliedFilters } from "../types/preset";
 import { renderEditedImage } from "./filters";
 import { extractCrop, type CropRect } from "./crop";
 
-export function createBatchItem(image: HTMLImageElement, fileName: string): BatchItem {
+export function createBatchItem(image: HTMLImageElement, file: File): BatchItem {
   const source = document.createElement("canvas");
-  const full = document.createElement("canvas");
   drawToPreviewCanvas(image, source, MAX_PREVIEW_SIZE);
-  drawToPreviewCanvas(image, full, MAX_FULL_SIZE);
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-  const name = fileName.replace(/\.[^.]+$/, "") || "memory";
+  const name = file.name.replace(/\.[^.]+$/, "") || "memory";
   return {
     id,
     name,
+    file,
     source,
-    full,
     thumbUrl: source.toDataURL("image/jpeg", 0.55),
   };
 }

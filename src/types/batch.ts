@@ -1,7 +1,7 @@
 export type BatchItem = {
   id: string;
   name: string;
+  file: File;
   source: HTMLCanvasElement;
-  full: HTMLCanvasElement;
   thumbUrl: string;
 };

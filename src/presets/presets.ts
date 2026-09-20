@@ -1,29 +1,7 @@
 import type { AppliedFilters, Preset } from "../types/preset";
+import { IDENTITY_FILTERS } from "../config/filters";
 
-const atmosphereZero = {
-  lightLeak: 0,
-  aberration: 0,
-  skyGradient: 0,
-  frame: 0,
-};
-
-export const IDENTITY_PRESET: AppliedFilters = {
-  brightness: 1,
-  contrast: 1,
-  saturation: 1,
-  blur: 0,
-  grain: 0,
-  bloom: 0,
-  warmth: 0,
-  fade: 0,
-  blue: 0,
-  hue: 0,
-  shadows: 0,
-  highlights: 0,
-  vignette: 0,
-  haze: 0,
-  ...atmosphereZero,
-};
+export const IDENTITY_PRESET: AppliedFilters = { ...IDENTITY_FILTERS };
 
 export const IDENTITY_TWEAKS: AppliedFilters = { ...IDENTITY_PRESET };
 

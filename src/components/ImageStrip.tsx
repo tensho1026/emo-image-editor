@@ -3,10 +3,11 @@ import type { BatchItem } from "../types/batch";
 type ImageStripProps = {
   items: BatchItem[];
   activeId: string;
+  thumbs: Record<string, string>;
   onSelect: (id: string) => void;
 };
 
-export default function ImageStrip({ items, activeId, onSelect }: ImageStripProps) {
+export default function ImageStrip({ items, activeId, thumbs, onSelect }: ImageStripProps) {
   if (items.length < 2) return null;
 
   return (
@@ -24,7 +25,7 @@ export default function ImageStrip({ items, activeId, onSelect }: ImageStripProp
                 selected ? "border-amber-200" : "border-white/15 opacity-70 hover:opacity-100"
               }`}
             >
-              <img src={item.thumbUrl} alt="" className="h-full w-full object-cover" />
+              <img src={thumbs[item.id] ?? item.thumbUrl} alt="" className="h-full w-full object-cover" />
               <span className="absolute bottom-0 right-0 bg-black/55 px-1 text-[9px] text-stone-200">
                 {index + 1}
               </span>

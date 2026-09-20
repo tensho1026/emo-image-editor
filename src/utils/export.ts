@@ -2,14 +2,20 @@ import type { AppliedFilters, ExportSize } from "../types/preset";
 import type { BatchItem } from "../types/batch";
 import { extractCrop, coverDraw, type CropRect } from "./crop";
 import { renderEditedImage } from "./filters";
+import { drawToPreviewCanvas, loadImageFromFile, MAX_FULL_SIZE } from "./image";
 
-export function buildExportCanvas(
+export async function buildExportCanvas(
   item: BatchItem,
   crop: CropRect,
   filters: AppliedFilters,
   size: ExportSize,
-): HTMLCanvasElement {
-  const base = size === "preview" ? item.source : item.full;
+): Promise<HTMLCanvasElement> {
+  let base = item.source;
+  if (size !== "preview") {
+    const image = await loadImageFromFile(item.file);
+    base = document.createElement("canvas");
+    drawToPreviewCanvas(image, base, MAX_FULL_SIZE);
+  }
   const cropped = extractCrop(base, crop);
   const previewCropWidth = Math.max(1, item.source.width * crop.width);
 

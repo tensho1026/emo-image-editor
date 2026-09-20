@@ -51,8 +51,12 @@ export default function RecipePanel({ recipes, onSave, onApply, onDelete, onImpo
               type="button"
               className="text-[11px] text-stone-500"
               onClick={async () => {
-                await navigator.clipboard.writeText(recipeToJson(recipe));
-                setMessage("JSONをコピーしました");
+                try {
+                  await navigator.clipboard.writeText(recipeToJson(recipe));
+                  setMessage("JSONをコピーしました");
+                } catch {
+                  setMessage("コピーできませんでした");
+                }
               }}
             >
               コピー

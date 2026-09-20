@@ -6,9 +6,10 @@ type SliderRowProps = {
   step?: number;
   display: string;
   onChange: (value: number) => void;
+  onChangeStart?: () => void;
 };
 
-export default function SliderRow({ label, value, min, max, step = 1, display, onChange }: SliderRowProps) {
+export default function SliderRow({ label, value, min, max, step = 1, display, onChange, onChangeStart }: SliderRowProps) {
   return (
     <label className="block">
       <span className="mb-1 flex items-center justify-between text-[11px] tracking-wide text-stone-400">
@@ -23,6 +24,8 @@ export default function SliderRow({ label, value, min, max, step = 1, display, o
         value={value}
         aria-label={label}
         className="w-full"
+        onPointerDown={onChangeStart}
+        onKeyDown={onChangeStart}
         onChange={(event) => onChange(Number(event.target.value))}
       />
     </label>
