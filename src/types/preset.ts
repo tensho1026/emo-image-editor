@@ -1,7 +1,4 @@
-export type Preset = {
-  id: string;
-  name: string;
-  description: string;
+export type AppliedFilters = {
   brightness: number;
   contrast: number;
   saturation: number;
@@ -22,6 +19,10 @@ export type Preset = {
   frame: number;
 };
 
-export type AppliedFilters = Omit<Preset, "id" | "name" | "description">;
+export type Preset = AppliedFilters & {
+  id: string;
+  name: string;
+  description: string;
+};
 
 export type ExportSize = "original" | "preview" | "square" | "story";

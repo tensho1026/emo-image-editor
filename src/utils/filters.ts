@@ -1,5 +1,5 @@
 import type { AppliedFilters, Preset } from "../types/preset";
-import { IDENTITY_PRESET } from "../presets/presets";
+import { FILTER_DEFINITIONS, FILTER_KEYS, IDENTITY_FILTERS } from "../config/filters";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -9,35 +9,21 @@ function clamp(value: number, min: number, max: number): number {
 export function applyIntensity(preset: Preset, intensity: number): AppliedFilters {
   const t = intensity / 50;
   const mix = (identity: number, value: number) => identity + (value - identity) * t;
-  const keys = Object.keys(IDENTITY_PRESET) as (keyof AppliedFilters)[];
-  const next = { ...IDENTITY_PRESET };
-  for (const key of keys) {
-    next[key] = mix(IDENTITY_PRESET[key], preset[key]);
+  const next = { ...IDENTITY_FILTERS };
+  for (const key of FILTER_KEYS) {
+    next[key] = mix(IDENTITY_FILTERS[key], preset[key]);
   }
   return next;
 }
 
 export function combineFilters(base: AppliedFilters, tweaks: AppliedFilters): AppliedFilters {
-  return {
-    brightness: clamp(base.brightness * tweaks.brightness, 0.25, 1.8),
-    contrast: clamp(base.contrast * tweaks.contrast, 0.4, 2),
-    saturation: clamp(base.saturation * tweaks.saturation, 0.15, 2),
-    blur: clamp(base.blur + tweaks.blur, 0, 8),
-    grain: clamp(base.grain + tweaks.grain, 0, 1),
-    bloom: clamp(base.bloom + tweaks.bloom, 0, 1),
-    warmth: clamp(base.warmth + tweaks.warmth, -1.5, 1.5),
-    fade: clamp(base.fade + tweaks.fade, 0, 1),
-    blue: clamp(base.blue + tweaks.blue, 0, 1.4),
-    hue: clamp(base.hue + tweaks.hue, -40, 40),
-    shadows: clamp(base.shadows + tweaks.shadows, 0, 1),
-    highlights: clamp(base.highlights + tweaks.highlights, 0, 1),
-    vignette: clamp(base.vignette + tweaks.vignette, 0, 1),
-    haze: clamp(base.haze + tweaks.haze, 0, 1),
-    lightLeak: clamp(base.lightLeak + tweaks.lightLeak, 0, 1),
-    aberration: clamp(base.aberration + tweaks.aberration, 0, 1),
-    skyGradient: clamp(base.skyGradient + tweaks.skyGradient, 0, 1),
-    frame: clamp(base.frame + tweaks.frame, 0, 1),
-  };
+  const combined = { ...IDENTITY_FILTERS };
+  for (const key of FILTER_KEYS) {
+    const definition = FILTER_DEFINITIONS[key];
+    const value = definition.combine === "multiply" ? base[key] * tweaks[key] : base[key] + tweaks[key];
+    combined[key] = clamp(value, definition.min, definition.max);
+  }
+  return combined;
 }
 
 export function cssFilterString(filters: AppliedFilters, pixelScale = 1): string {

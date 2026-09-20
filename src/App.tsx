@@ -17,22 +17,17 @@ import CompareToggle from "./components/CompareToggle";
 import { DEFAULT_PRESET_ID, IDENTITY_TWEAKS, presets } from "./presets/presets";
 import type { AppliedFilters, ExportSize } from "./types/preset";
 import type { BatchItem } from "./types/batch";
-import { createBatchItem, copyCanvas, uniqueDownloadName, editedThumbUrl } from "./utils/batch";
+import { createBatchItem, copyCanvas, uniqueDownloadName } from "./utils/batch";
 import { applyIntensity, combineFilters, renderEditedImage } from "./utils/filters";
 import { canvasToBlob, downloadBlob, loadImageFromFile } from "./utils/image";
 import { createZip } from "./utils/zip";
 import { ASPECT_OPTIONS, FULL_CROP, aspectCrop, clampCrop, extractCrop, type AspectId, type CropRect } from "./utils/crop";
 import { buildExportCanvas } from "./utils/export";
 import { loadRecipes, saveRecipes, type Recipe } from "./utils/recipes";
+import { useEditorState } from "./hooks/useEditorState";
+import { useBatchThumbnails, usePresetThumbnails } from "./hooks/useThumbnailPreviews";
 
 const MAX_BATCH = 30;
-
-type Snapshot = {
-  selectedPresetId: string;
-  intensity: number;
-  tweaks: AppliedFilters;
-  crops: Record<string, CropRect>;
-};
 
 function showItemOnCanvases(
   item: BatchItem,
@@ -52,21 +47,27 @@ export default function App() {
 
   const [items, setItems] = useState<BatchItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [selectedPresetId, setSelectedPresetId] = useState(DEFAULT_PRESET_ID);
-  const [intensity, setIntensity] = useState(50);
-  const [tweaks, setTweaks] = useState(IDENTITY_TWEAKS);
+  const {
+    selectedPresetId,
+    intensity,
+    tweaks,
+    crops,
+    aspect,
+    canUndo,
+    checkpoint,
+    update: updateEditor,
+    setCrop,
+    undo,
+    startSession,
+  } = useEditorState();
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewVersion, setPreviewVersion] = useState(0);
   const [exportProgress, setExportProgress] = useState<string | null>(null);
   const [isShowingOriginal, setIsShowingOriginal] = useState(false);
   const [cropMode, setCropMode] = useState(false);
-  const [aspect, setAspect] = useState<AspectId>("free");
-  const [crops, setCrops] = useState<Record<string, CropRect>>({});
   const [exportSize, setExportSize] = useState<ExportSize>("original");
-  const [presetThumbs, setPresetThumbs] = useState<Record<string, string>>({});
   const [recipes, setRecipes] = useState<Recipe[]>(() => (typeof window === "undefined" ? [] : loadRecipes()));
-  const [history, setHistory] = useState<Snapshot | null>(null);
 
   const hasImage = items.length > 0;
   const activeItem = items.find((item) => item.id === activeId) ?? items[0];
@@ -81,16 +82,8 @@ export default function App() {
     () => combineFilters(applyIntensity(selectedPreset, intensity), tweaks),
     [selectedPreset, intensity, tweaks],
   );
-
-  const snapshotRef = useRef<Snapshot>({
-    selectedPresetId,
-    intensity,
-    tweaks,
-    crops,
-  });
-  snapshotRef.current = { selectedPresetId, intensity, tweaks, crops };
-
-  const commit = () => setHistory(snapshotRef.current);
+  const presetThumbs = usePresetThumbnails(activeItem, activeCrop);
+  const batchThumbs = useBatchThumbnails(items, crops, filters);
 
   const rerender = () => {
     const source = sourceCanvasRef.current;
@@ -116,53 +109,20 @@ export default function App() {
     };
   }, [hasImage]);
 
-  useEffect(() => {
-    if (!hasImage || !activeItem) return;
-    const handle = window.setTimeout(() => {
-      const next: Record<string, string> = {};
-      for (const preset of presets) {
-        next[preset.id] = editedThumbUrl(activeItem.source, activeCrop, applyIntensity(preset, 50));
-      }
-      setPresetThumbs(next);
-    }, 180);
-    return () => window.clearTimeout(handle);
-  }, [hasImage, activeItem?.id, activeCrop]);
-
-  useEffect(() => {
-    if (!hasImage) return;
-    const handle = window.setTimeout(() => {
-      setItems((current) =>
-        current.map((item) => ({
-          ...item,
-          thumbUrl: editedThumbUrl(item.source, crops[item.id] ?? FULL_CROP, filters),
-        })),
-      );
-    }, 280);
-    return () => window.clearTimeout(handle);
-  }, [filters, hasImage, crops]);
-
   const resetEdits = () => {
-    commit();
-    setSelectedPresetId(DEFAULT_PRESET_ID);
-    setIntensity(50);
-    setTweaks(IDENTITY_TWEAKS);
+    checkpoint();
+    updateEditor({
+      selectedPresetId: DEFAULT_PRESET_ID,
+      intensity: 50,
+      tweaks: { ...IDENTITY_TWEAKS },
+    });
     setIsShowingOriginal(false);
   };
 
-  const undo = () => {
-    if (!history) return;
-    setSelectedPresetId(history.selectedPresetId);
-    setIntensity(history.intensity);
-    setTweaks(history.tweaks);
-    setCrops(history.crops);
-    setHistory(null);
-  };
-
   const clearBatch = () => {
-    resetEdits();
     setItems([]);
     setActiveId(null);
-    setCrops({});
+    startSession({});
     setCropMode(false);
     setError(null);
   };
@@ -181,7 +141,7 @@ export default function App() {
       const nextItems: BatchItem[] = [];
       for (const file of selected) {
         const image = await loadImageFromFile(file);
-        nextItems.push(createBatchItem(image, file.name));
+        nextItems.push(createBatchItem(image, file));
       }
 
       const source = sourceCanvasRef.current;
@@ -193,10 +153,7 @@ export default function App() {
         for (const item of nextItems) fresh[item.id] = FULL_CROP;
         setItems(nextItems);
         setActiveId(nextItems[0].id);
-        setCrops(fresh);
-        setSelectedPresetId(DEFAULT_PRESET_ID);
-        setIntensity(50);
-        setTweaks(IDENTITY_TWEAKS);
+        startSession(fresh);
         setIsShowingOriginal(false);
         if (source && output) {
           showItemOnCanvases(nextItems[0], source, output, filters, FULL_CROP);
@@ -205,7 +162,7 @@ export default function App() {
         for (const item of nextItems) nextCrops[item.id] = FULL_CROP;
         const merged = [...items, ...nextItems];
         setItems(merged);
-        setCrops(nextCrops);
+        updateEditor({ crops: nextCrops });
         if (!activeId) setActiveId(nextItems[0].id);
         if (source && output && activeItem) {
           showItemOnCanvases(activeItem, source, output, filters, crops[activeItem.id] ?? FULL_CROP);
@@ -230,7 +187,7 @@ export default function App() {
     try {
       if (items.length === 1) {
         const item = items[0];
-        const canvas = buildExportCanvas(item, crops[item.id] ?? FULL_CROP, filters, exportSize);
+        const canvas = await buildExportCanvas(item, crops[item.id] ?? FULL_CROP, filters, exportSize);
         const blob = await canvasToBlob(canvas, format, quality);
         downloadBlob(blob, `${item.name}-${selectedPreset.id}.${extension}`);
         return;
@@ -242,7 +199,7 @@ export default function App() {
       for (let index = 0; index < items.length; index += 1) {
         const item = items[index];
         setExportProgress(`${index + 1}/${items.length}`);
-        const canvas = buildExportCanvas(item, crops[item.id] ?? FULL_CROP, filters, exportSize);
+        const canvas = await buildExportCanvas(item, crops[item.id] ?? FULL_CROP, filters, exportSize);
         const blob = await canvasToBlob(canvas, format, quality);
         const data = new Uint8Array(await blob.arrayBuffer());
         const name = uniqueDownloadName(`${item.name}-${selectedPreset.id}`, used, extension);
@@ -254,6 +211,8 @@ export default function App() {
 
       const zip = createZip(zipEntries);
       downloadBlob(zip, `emo-${selectedPreset.id}-${items.length}photos.zip`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "画像の書き出しに失敗しました");
     } finally {
       setExportProgress(null);
       const source = sourceCanvasRef.current;
@@ -267,19 +226,22 @@ export default function App() {
 
   const applyAspect = (id: AspectId) => {
     if (!activeItem) return;
-    commit();
-    setAspect(id);
+    checkpoint();
+    updateEditor({ aspect: id });
     const option = ASPECT_OPTIONS.find((item) => item.id === id);
     const next =
       !option || option.id === "free" || option.id === "original" || option.value === null
         ? FULL_CROP
         : aspectCrop(activeItem.source.width, activeItem.source.height, option.value);
-    setCrops((current) => ({ ...current, [activeItem.id]: next }));
+    setCrop(activeItem.id, next);
   };
 
   const persistRecipes = (next: Recipe[]) => {
-    setRecipes(next);
-    saveRecipes(next);
+    if (saveRecipes(next)) {
+      setRecipes(next);
+      return;
+    }
+    setError("レシピを保存できませんでした");
   };
 
   if (!hasImage) {
@@ -338,9 +300,10 @@ export default function App() {
                 version={previewVersion}
                 cropMode={cropMode}
                 crop={activeCrop}
+                onCropStart={checkpoint}
                 onCropChange={(crop) => {
                   if (!activeItem) return;
-                  setCrops((current) => ({ ...current, [activeItem.id]: clampCrop(crop) }));
+                  setCrop(activeItem.id, clampCrop(crop));
                 }}
               />
               {!cropMode ? (
@@ -350,7 +313,7 @@ export default function App() {
               ) : null}
             </div>
           </div>
-          <ImageStrip items={items} activeId={activeItem.id} onSelect={setActiveId} />
+          <ImageStrip items={items} activeId={activeItem.id} thumbs={batchThumbs} onSelect={setActiveId} />
         </section>
 
         <section className="flex min-h-0 flex-1 flex-col lg:w-[min(46vw,640px)] lg:flex-none">
@@ -359,27 +322,30 @@ export default function App() {
               {error ? <p className="text-center text-sm text-rose-300">{error}</p> : null}
               <div className="grid grid-cols-2 gap-2">
                 <ResetEditsButton onReset={resetEdits} />
-                <UndoButton disabled={!history} onUndo={undo} />
+                <UndoButton disabled={!canUndo} onUndo={undo} />
               </div>
               <PresetSelector
                 presets={presets}
                 selectedId={selectedPresetId}
                 thumbs={presetThumbs}
                 onSelect={(id) => {
-                  commit();
-                  setSelectedPresetId(id);
-                  setTweaks(IDENTITY_TWEAKS);
+                  checkpoint();
+                  updateEditor({ selectedPresetId: id, tweaks: { ...IDENTITY_TWEAKS } });
                   setIsShowingOriginal(false);
                 }}
               />
-              <IntensitySlider value={intensity} onChange={setIntensity} />
+              <IntensitySlider
+                value={intensity}
+                onChangeStart={checkpoint}
+                onChange={(value) => updateEditor({ intensity: value })}
+              />
               <CropBar
                 cropMode={cropMode}
                 aspect={aspect}
                 onToggle={() => setCropMode((value) => !value)}
                 onAspect={applyAspect}
               />
-              <AdjustSection tweaks={tweaks} onChange={setTweaks} />
+              <AdjustSection tweaks={tweaks} onChangeStart={checkpoint} onChange={(value) => updateEditor({ tweaks: value })} />
               <RecipePanel
                 recipes={recipes}
                 onSave={(name) => {
@@ -394,10 +360,12 @@ export default function App() {
                   persistRecipes([recipe, ...recipes].slice(0, 40));
                 }}
                 onApply={(recipe) => {
-                  commit();
-                  setSelectedPresetId(recipe.presetId);
-                  setIntensity(recipe.intensity);
-                  setTweaks({ ...IDENTITY_TWEAKS, ...recipe.tweaks });
+                  checkpoint();
+                  updateEditor({
+                    selectedPresetId: recipe.presetId,
+                    intensity: recipe.intensity,
+                    tweaks: { ...IDENTITY_TWEAKS, ...recipe.tweaks },
+                  });
                 }}
                 onDelete={(id) => persistRecipes(recipes.filter((recipe) => recipe.id !== id))}
                 onImport={(recipe) => persistRecipes([recipe, ...recipes.filter((item) => item.id !== recipe.id)].slice(0, 40))}

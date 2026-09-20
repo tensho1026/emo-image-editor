@@ -8,6 +8,7 @@ type ImagePreviewProps = {
   version: number;
   cropMode: boolean;
   crop: CropRect;
+  onCropStart: () => void;
   onCropChange: (crop: CropRect) => void;
 };
 
@@ -18,6 +19,7 @@ export default function ImagePreview({
   version,
   cropMode,
   crop,
+  onCropStart,
   onCropChange,
 }: ImagePreviewProps) {
   const displayRef = useRef<HTMLCanvasElement>(null);
@@ -90,6 +92,7 @@ export default function ImagePreview({
               }}
               onPointerDown={(event) => {
                 event.preventDefault();
+                onCropStart();
                 dragging.current = "move";
               }}
             >
@@ -97,10 +100,11 @@ export default function ImagePreview({
                 type="button"
                 aria-label="リサイズ"
                 className="absolute -bottom-2 -right-2 h-5 w-5 rounded-sm bg-amber-100"
-                onPointerDown={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  dragging.current = "resize";
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onCropStart();
+                    dragging.current = "resize";
                 }}
               />
             </div>

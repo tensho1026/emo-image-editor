@@ -5,9 +5,10 @@ import FineTunePanel from "./FineTunePanel";
 type Props = {
   tweaks: AppliedFilters;
   onChange: (tweaks: AppliedFilters) => void;
+  onChangeStart?: () => void;
 };
 
-export default function AdjustSection({ tweaks, onChange }: Props) {
+export default function AdjustSection({ tweaks, onChange, onChangeStart }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -21,7 +22,7 @@ export default function AdjustSection({ tweaks, onChange }: Props) {
         <span className="text-xs text-stone-500">{open ? "閉じる" : "開く"}</span>
       </button>
       <div className={`mt-3 ${open ? "block" : "hidden"} lg:mt-0 lg:block`}>
-        <FineTunePanel tweaks={tweaks} onChange={onChange} />
+        <FineTunePanel tweaks={tweaks} onChange={onChange} onChangeStart={onChangeStart} />
       </div>
     </section>
   );

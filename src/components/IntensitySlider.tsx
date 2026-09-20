@@ -1,9 +1,10 @@
 type IntensitySliderProps = {
   value: number;
   onChange: (value: number) => void;
+  onChangeStart?: () => void;
 };
 
-export default function IntensitySlider({ value, onChange }: IntensitySliderProps) {
+export default function IntensitySlider({ value, onChange, onChangeStart }: IntensitySliderProps) {
   return (
     <section>
       <div className="mb-3 flex items-end justify-between">
@@ -17,6 +18,8 @@ export default function IntensitySlider({ value, onChange }: IntensitySliderProp
         value={value}
         aria-label="加工の強さ"
         className="w-full"
+        onPointerDown={onChangeStart}
+        onKeyDown={onChangeStart}
         onChange={(event) => onChange(Number(event.target.value))}
       />
       <div className="mt-2 flex justify-between text-[11px] tracking-wide text-stone-500">
